@@ -33,7 +33,7 @@ class CollectionViewPageFlowLayout: UICollectionViewFlowLayout {
         self.configureSectionInsetsBasedOnLineSpacing()
     }
 
-    required init(coder aDecoder: NSCoder) {
+    required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         
         /*  Call configure section instes in case the minimum line spacing is set via
@@ -55,33 +55,32 @@ class CollectionViewPageFlowLayout: UICollectionViewFlowLayout {
     
     // MARK: - Override layout
     
-    override func prepareLayout() {
+    override func prepare() {
         if let collectionView = self.collectionView {
-            collectionView.pagingEnabled = true
-            self.scrollDirection = .Horizontal
+            collectionView.isPagingEnabled = true
+            self.scrollDirection = .horizontal
             
             /*  Get the size of the collection view and fit the items into it to make them
              *  appear as _pages_.
              */
             let viewSize = collectionView.bounds.size
-            resetItemSizeWithViewSize(viewSize)
+            resetItemSize(viewSize: viewSize)
         }
     }
     
-    override func shouldInvalidateLayoutForBoundsChange(newBounds: CGRect) -> Bool {
-        resetItemSizeWithViewSize(newBounds.size)
-        return !CGRectEqualToRect(self.collectionView!.bounds, newBounds)
+    override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
+        resetItemSize(viewSize: newBounds.size)
+        return self.collectionView?.bounds.equalTo(newBounds) ?? true
     }
     
     // MARK: - Content offset presistance
     
-    override func targetContentOffsetForProposedContentOffset(proposedContentOffset: CGPoint) -> CGPoint {
-        
+    override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint) -> CGPoint {
         /*  Needed to keep the collectionView on the same _page_ when it's bounds change
          */
         if let collectionView = self.collectionView {
-            if let indexPath = collectionView.indexPathsForVisibleItems().first as NSIndexPath? {
-                let attributes = self.layoutAttributesForItemAtIndexPath(indexPath)
+            if let indexPath = collectionView.indexPathsForVisibleItems.first,
+                let attributes = self.layoutAttributesForItem(at: indexPath) {
                 var origin = attributes.frame.origin
                 origin.x -= self.minimumLineSpacing / 2
                 return origin
@@ -92,7 +91,7 @@ class CollectionViewPageFlowLayout: UICollectionViewFlowLayout {
     
     // MARK: - Private functions
     
-    private func resetItemSizeWithViewSize(viewSize: CGSize) {
+    private func resetItemSize(viewSize: CGSize) {
         let itemSize = CGSize(width: viewSize.width - minimumLineSpacing, height: viewSize.height)
         self.itemSize = itemSize
     }
